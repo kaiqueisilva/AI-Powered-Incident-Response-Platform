@@ -43,3 +43,35 @@ resource "aws_lb_listener" "http" {
     target_group_arn = aws_lb_target_group.app.arn
   }
 }
+
+resource "aws_lb_target_group" "grafana" {
+  name        = "${var.project_name}-grafana-tg"
+  port        = 3000
+  protocol    = "HTTP"
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+  target_type = "ip"
+
+  health_check {
+    path                = "/api/health" # rota de health check nativa do Grafana
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 30
+    matcher             = "200"
+  }
+
+  tags = {
+    Name = "${var.project_name}-grafana-tg"
+  }
+}
+
+resource "aws_lb_listener" "grafana" {
+  load_balancer_arn = aws_lb.main.arn
+  port              = 3000
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.grafana.arn
+  }
+}
