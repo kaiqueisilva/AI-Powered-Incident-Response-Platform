@@ -40,5 +40,5 @@ variable "desired_count" {
 variable "image_tag" {
   description = "Tag da imagem no ECR a ser deployada"
   type        = string
-  default     = "v1"
+  default     = "v2"
 }

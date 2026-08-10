@@ -58,7 +58,7 @@ resource "aws_ecs_service" "app" {
   network_configuration {
     subnets          = data.terraform_remote_state.network.outputs.private_subnet_ids
     security_groups  = [aws_security_group.ecs.id]
-    assign_public_ip = false # tá em subnet privada, não precisa de IP público
+    assign_public_ip = false
   }
 
   load_balancer {
@@ -67,5 +67,9 @@ resource "aws_ecs_service" "app" {
     container_port   = var.container_port
   }
 
-  depends_on = [aws_lb_listener.http] # espera o listener existir antes de tentar registrar no target group
+  service_registries {
+    registry_arn = aws_service_discovery_service.app.arn
+  }
+
+  depends_on = [aws_lb_listener.http]
 }
