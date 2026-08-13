@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_user" "github_actions" {
   name = "air-github-actions"
 
@@ -18,6 +20,7 @@ resource "aws_iam_user_policy" "github_actions" {
         Effect = "Allow"
         Action = [
           "ecr:GetAuthorizationToken",
+          "ecr:DescribeImages",
           "ecr:BatchCheckLayerAvailability",
           "ecr:PutImage",
           "ecr:InitiateLayerUpload",
@@ -35,6 +38,19 @@ resource "aws_iam_user_policy" "github_actions" {
           "ecs:RegisterTaskDefinition"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = ["iam:PassRole"]
+        Resource = [
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/air-ecs-execution-role",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/air-ecs-task-role"
+        ]
+        Condition = {
+          StringEquals = {
+            "iam:PassedToService" = "ecs-tasks.amazonaws.com"
+          }
+        }
       },
       {
         Effect = "Allow"
