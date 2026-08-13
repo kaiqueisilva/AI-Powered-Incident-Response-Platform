@@ -1,3 +1,5 @@
+# Pipeline CI/CD testado em 2026
+
 from fastapi import FastAPI
 from core.config import settings
 from api.routes import health, incidents
