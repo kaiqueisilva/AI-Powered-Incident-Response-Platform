@@ -2,9 +2,8 @@ name: Deploy App to ECS
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "app/**" # só roda se algo dentro de app/ mudar
+    branches: ["**"]
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1
@@ -39,9 +38,18 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          set -euo pipefail
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+          if aws ecr describe-images \
+               --repository-name "$ECR_REPOSITORY" \
+               --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
+            echo "Image $IMAGE_TAG is already in ECR (immutable tags), skipping build and push."
+            exit 0
+          fi
+
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Download current task definition
         run: |
